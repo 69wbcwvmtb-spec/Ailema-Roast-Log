@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ailema Roast Log · iPad</title>
+<style>
+:root{
+  --bg:#f4f0e7;--card:#fffdf8;--ink:#282622;--muted:#777168;
+  --line:#ddd5c7;--accent:#825531;--yellow:#d09a13;--crack:#96502d;--drop:#3c3935;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Segoe UI",sans-serif}
+body{min-height:100vh}
+.wrap{max-width:1100px;margin:0 auto;padding:24px 22px 50px}
+.brand{text-align:center;margin:4px 0 24px}
+.brand h1{margin:0;font-size:30px;letter-spacing:.12em;font-weight:750}
+.brand p{margin:7px 0 0;color:var(--muted);font-size:15px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:24px;margin:16px 0;box-shadow:0 7px 24px rgba(40,35,25,.06)}
+.section-title{font-size:17px;font-weight:800;letter-spacing:.02em;margin-bottom:18px}
+.label{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+.top{display:flex;justify-content:space-between;gap:18px;align-items:flex-end}
+.top strong{font-size:18px}
+.timer{font-size:78px;font-variant-numeric:tabular-nums;font-weight:700;letter-spacing:-.055em;line-height:1.05;margin:13px 0}
+.status{font-weight:750;font-size:15px}.status.live{color:#7a4c27}.status.done{color:#4b4945}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+label{font-size:13px;font-weight:700;color:var(--muted)}
+input,select,textarea{display:block;width:100%;margin-top:7px;border:1px solid #cec5b6;border-radius:13px;padding:14px 13px;background:#fffdf8;color:var(--ink);font:inherit;font-size:16px;min-height:50px}
+select{appearance:auto}
+textarea{min-height:130px;resize:vertical}
+.small-note,.note{margin-top:13px;color:var(--muted);font-size:13px;line-height:1.5}
+
+/* Animated roast bean — the bean itself is the live position marker on the timeline. */
+.bean-visual{position:absolute;left:0;top:0;width:42px;height:28px;top:78px;left:20px;transform:translate(-50%,-50%) rotate(0deg);transform-origin:50% 50%;z-index:5;transition:left .18s linear,transform .18s linear,filter .8s ease}
+.bean-half{position:absolute;inset:0;border-radius:62% 38% 58% 42% / 48% 52% 48% 52%;background:linear-gradient(135deg,#78a84b 0%,#9fc65d 48%,#587b38 100%);box-shadow:inset -6px -5px 0 rgba(0,0,0,.08),0 7px 14px rgba(40,35,25,.18);transition:background 1.2s ease,box-shadow 1.2s ease}
+.bean-seam{position:absolute;left:50%;top:3px;width:3px;height:26px;transform:translateX(-50%) rotate(7deg);border-left:3px solid rgba(52,65,35,.55);border-radius:50%;transition:opacity .5s ease}
+.bean-cracks{position:absolute;left:50%;top:5px;width:22px;height:23px;transform:translateX(-50%);opacity:0;transition:opacity .45s ease}
+.bean-cracks:before,.bean-cracks:after{content:"";position:absolute;width:2px;height:11px;background:#3b251b;border-radius:4px;transform:rotate(25deg)}
+.bean-cracks:before{left:6px;top:2px}.bean-cracks:after{right:5px;bottom:1px;transform:rotate(-28deg)}
+.bean-label{display:none}
+.bean-visual.yellow .bean-half{background:linear-gradient(135deg,#d4b14c 0%,#e0c86b 45%,#b97b2e 100%)}
+.bean-visual.crack .bean-half{background:linear-gradient(135deg,#a96b39 0%,#c17a43 40%,#754022 100%)}
+.bean-visual.crack .bean-cracks{opacity:1}
+.bean-visual.drop{filter:saturate(.8)}
+.bean-visual.drop .bean-half{background:linear-gradient(135deg,#5b3423 0%,#7a4026 45%,#392016 100%);box-shadow:inset -6px -5px 0 rgba(0,0,0,.12),0 7px 14px rgba(40,35,25,.18)}
+.bean-visual.drop .bean-cracks{opacity:1}
+
+/* Timeline: event markers sit exactly on the track; the bean floats just above it. */
+.timeline{position:relative;height:205px;margin:34px 0 4px;overflow:visible}
+.track{position:absolute;left:20px;right:20px;top:94px;height:8px;background:#ded6c9;border-radius:10px}
+.progress{display:none}
+.ruler{position:absolute;left:20px;right:20px;top:112px;height:65px}
+.ruler-tick{position:absolute;top:0;width:1px;height:6px;background:#bfb6a8;transform:translateX(-50%)}
+.ruler-tick.major{height:13px;background:#8f877b}
+.ruler-tick.half{height:8px;background:#aaa195}
+.ruler-label{position:absolute;top:18px;transform:translateX(-50%);font-size:11px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.event-point{position:absolute;top:98px;width:8px;height:8px;border-radius:50%;transform:translate(-50%,-50%);z-index:4;box-shadow:0 0 0 2px var(--card)}
+.event-point.yellow{background:var(--yellow)}.event-point.crack{background:var(--crack)}.event-point.drop{background:var(--drop)}
+.timeline-card-note{margin-top:6px}
+
+.buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-top:20px}
+button{border:0;border-radius:16px;min-height:64px;padding:14px 12px;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation}
+button:disabled{opacity:.38;cursor:not-allowed}
+button.start{background:var(--ink);color:white}button.yellow{background:#f0d27b}button.crack{background:#b96f49;color:white}button.drop{background:#45413d;color:white}
+.weight-row{display:flex;gap:10px;align-items:flex-end}
+.weight-row input{flex:1;margin-top:7px}
+.loss-inline{min-width:130px;min-height:50px;border:1px solid #cec5b6;border-radius:13px;padding:10px 12px;background:#f5f0e7;display:flex;flex-direction:column;justify-content:center}
+.loss-inline .loss-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:800}
+.loss-inline .loss-value{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:2px}
+
+.events{display:grid;gap:9px}.event{display:flex;justify-content:space-between;align-items:center;padding:13px 15px;border:1px solid var(--line);border-radius:12px;font-size:15px}.event span{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:700}
+.actions{display:flex;gap:12px;margin-top:14px}.actions button{flex:1}.save{background:var(--ink);color:#fff}
+.saved{margin-top:11px;color:#5b7651;font-size:13px;font-weight:700}
+.history{display:grid;gap:9px}.history-row{display:flex;justify-content:space-between;gap:15px;border:1px solid var(--line);border-radius:12px;padding:13px 15px;font-size:13px}.history-row div div{color:var(--muted);margin-top:4px}.history-empty{color:var(--muted);font-size:13px}
+.footer{text-align:center;color:var(--muted);font-size:12px;margin-top:22px}
+
+/* Make the live roast controls feel like a dedicated iPad control panel. */
+body:has(#status.live) .card:nth-of-type(2),
+body:has(#status.done) .card:nth-of-type(2){border-color:#cfc4b4}
+body:has(#status.live) .timer{font-size:88px}
+
+@media (max-width:900px){
+  .grid{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:700px){
+  .wrap{padding:18px 14px 40px}.card{padding:19px;border-radius:19px}
+  .brand h1{font-size:25px}.top{align-items:flex-start}.timer{font-size:62px}
+  .buttons{grid-template-columns:repeat(2,1fr)}
+  .grid{grid-template-columns:1fr}
+  button{min-height:68px;font-size:16px}
+}
+@media (orientation:landscape) and (min-width:700px){
+  .wrap{max-width:1200px}.buttons{gap:16px}
+  .card{padding:25px}
+}
+@media (min-width:700px){
+  /* iPad-sized touch controls */
+  .buttons button{min-height:76px;font-size:18px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <h1>AILEMA ROAST LOG</h1>
+    <p>Roast journal · live session</p>
+  </div>
+
+  <div class="card">
+    <div class="section-title">1 · Roast setup</div>
+    <div class="grid">
+      <label>Bean
+        <select id="bean">
+          <option>Ethiopian Guji</option><option>Ethiopian Yirgacheffe</option>
+          <option>Colombian</option><option>Brazilian</option><option>Other</option>
+        </select>
+      </label>
+      <label>Process
+        <select id="process"><option>Washed</option><option>Natural</option><option>Honey</option><option>Anaerobic</option><option>Other</option></select>
+      </label>
+      <label>Roast profile
+        <select id="profile"><option>Filter · Medium</option><option>Espresso · Medium</option><option>Espresso · Dark</option><option>Turkish</option><option>Custom</option></select>
+      </label>
+      <label>Green weight (g)
+        <input id="greenWeight" type="number" value="200" min="1" step="1">
+      </label>
+      <label>Variety
+        <input id="variety" placeholder="e.g. Heirloom">
+      </label>
+      <label>Elevation (m)
+        <input id="elevation" type="number" placeholder="e.g. 1900">
+      </label>
+    </div>
+    <div class="small-note">This is a journal entry first. The roast timer comes after the setup is recorded.</div>
+  </div>
+
+  <div class="card">
+    <div class="top">
+      <div><div class="label">Current roast</div><strong id="summary">Ethiopian Guji · Filter · Medium · 200 g</strong></div>
+      <div style="text-align:right"><div class="label">Status</div><div id="status" class="status">Ready</div></div>
+    </div>
+    <div id="timer" class="timer">00:00</div>
+
+    <div class="buttons">
+      <button id="start" class="start">▶ Start Roast</button>
+      <button id="yellow" class="yellow" disabled>🟡 Yellowing</button>
+      <button id="crack" class="crack" disabled>🔥 First Crack</button>
+      <button id="drop" class="drop" disabled>⬛ Roast End / Drop</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label">Live roast progression</div>
+    <div class="timeline" id="timeline" aria-label="Live roast timeline">
+      <div class="track"></div>
+      <div id="beanVisual" class="bean-visual" aria-label="Roasting coffee bean">
+        <div class="bean-half"></div>
+        <div class="bean-seam"></div>
+        <div class="bean-cracks"></div>
+      </div>
+      <div class="ruler" id="ruler"></div>
+    </div>
+    <div class="note timeline-card-note">0–15 min scale · expands automatically for longer roasts. Event names and exact times are shown below in the Event Log.</div>
+  </div>
+
+  <div class="card">
+    <div class="label">Event log</div>
+    <div id="events" class="events">
+      <div class="event"><b>Waiting to start</b><span>—</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">2 · After the roast</div>
+    <div class="grid">
+      <label style="grid-column:span 2">Post-roast weight (g)
+        <div class="weight-row">
+          <input id="roastedWeight" type="number" min="1" step="1" placeholder="e.g. 168">
+          <div class="loss-inline" aria-live="polite"><div class="loss-label">Weight loss</div><div class="loss-value" id="lossValue">—</div></div>
+        </div>
+      </label>
+      <label>Brew method
+        <select id="brew"><option>V60</option><option>Drip</option><option>Espresso</option><option>French Press</option><option>AeroPress</option><option>Other</option></select>
+      </label>
+      <label>Score / 100
+        <input id="score" type="number" min="0" max="100" step="1">
+      </label>
+      <label>Photo
+        <input id="photo" type="file" accept="image/*">
+      </label>
+    </div>
+    <label style="display:block;margin-top:14px">Tasting notes / observations
+      <textarea id="notes" placeholder="Aroma, colour, smell, tasting notes, brew result, what you would change next time..."></textarea>
+    </label>
+    <div class="actions">
+      <button id="save" class="save">Save Roast Log</button>
+      <button id="reset">↻ New Roast</button>
+    </div>
+    <div id="saved" class="saved"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Roast history</div>
+    <div id="history" class="history-empty">No saved roasts yet. Saved entries will appear here.</div>
+  </div>
+
+  <div class="footer">Standalone prototype · designed for iPad · no hosting required for the prototype</div>
+</div>
+
+<script>
+(function(){
+"use strict";
+let startTime=0, timerId=null, running=false, finished=false;
+const marks={yellow:null,crack:null,drop:null};
+
+const $=id=>document.getElementById(id);
+const timer=$("timer"), status=$("status"), start=$("start"), yellow=$("yellow"), crack=$("crack"), drop=$("drop");
+const timeline=$("timeline"), ruler=$("ruler"), eventBox=$("events"), summary=$("summary"), lossValue=$("lossValue"), beanVisual=$("beanVisual");
+let timelineMaxMs=15*60*1000;
+
+function fmt(ms){
+  const total=Math.max(0,Math.floor(ms/1000)), m=Math.floor(total/60), s=total%60;
+  return String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
+}
+function elapsed(){return performance.now()-startTime;}
+function chooseTimelineMax(ms){
+  const min=15*60*1000;
+  if(ms<=min)return min;
+  const minutes=Math.ceil(ms/60000/5)*5;
+  return minutes*60*1000;
+}
+function renderRuler(){
+  ruler.innerHTML="";
+  const totalMinutes=timelineMaxMs/60000;
+  const totalHalfMinutes=Math.round(totalMinutes*2);
+  for(let i=0; i<=totalHalfMinutes; i++){
+    const minutes=i/2;
+    const tick=document.createElement("div");
+    const isMajor=(i%10===0);
+    const isHalf=(i%2===1);
+    tick.className="ruler-tick"+(isMajor?" major":isHalf?" half":"");
+    tick.style.left=(minutes/totalMinutes*100)+"%";
+    ruler.appendChild(tick);
+    if(isMajor){
+      const label=document.createElement("div");
+      label.className="ruler-label";
+      label.style.left=(minutes/totalMinutes*100)+"%";
+      label.textContent=minutes+" min";
+      ruler.appendChild(label);
+    }
+  }
+}
+function updateTimelineScale(maxMs){
+  const next=chooseTimelineMax(maxMs);
+  if(next!==timelineMaxMs){
+    timelineMaxMs=next;
+    renderRuler();
+    timeline.querySelectorAll(".event-point[data-time]").forEach(m=>positionMarker(m,Number(m.dataset.time)));
+  }
+}
+function positionMarker(el,time){
+  const pct=Math.max(0,Math.min(1,time/timelineMaxMs));
+  const trackLeft=20, trackRight=20;
+  const trackWidth=Math.max(0,timeline.clientWidth-trackLeft-trackRight);
+  el.style.left=(trackLeft+pct*trackWidth)+"px";
+}
+function moveBean(time){
+  updateTimelineScale(time);
+  const pct=Math.max(0,Math.min(100,(time/timelineMaxMs)*100));
+  const trackLeft=20, trackRight=20;
+  const trackWidth=Math.max(0,timeline.clientWidth-trackLeft-trackRight);
+  const leftPx=trackLeft+(pct/100)*trackWidth;
+  const rotation=running ? Math.sin(time/220)*5 : 0;
+  beanVisual.style.left=leftPx+"px";
+  beanVisual.style.top="78px";
+  beanVisual.style.transform=`translate(-50%,-50%) rotate(${rotation}deg)`;
+}
+function tick(){
+  const e=elapsed();
+  timer.textContent=fmt(e);
+  moveBean(e);
+}
+function repositionTimeline(){
+  moveBean(running || finished ? elapsed() : 0);
+  timeline.querySelectorAll(".event-point[data-time]").forEach(m=>positionMarker(m,Number(m.dataset.time)));
+}
+window.addEventListener("resize",repositionTimeline);
+
+function setupSummary(){
+  summary.textContent=$("bean").value+" · "+$("profile").value+" · "+$("greenWeight").value+" g";
+}
+["bean","profile","greenWeight"].forEach(id=>$(id).addEventListener("input",setupSummary));
+
+function logEvent(label,time){
+  const waiting=eventBox.querySelector(".waiting");
+  if(waiting) waiting.remove();
+  const row=document.createElement("div");
+  row.className="event";
+  row.innerHTML="<b>"+label+"</b><span>"+fmt(time)+"</span>";
+  eventBox.appendChild(row);
+}
+function addMarker(cls,label,time){
+  updateTimelineScale(time);
+  const el=document.createElement("div");
+  const kind=cls.includes("yellow")?"yellow":cls.includes("crack")?"crack":"drop";
+  el.className="event-point "+kind;
+  el.dataset.time=time;
+  el.title=label+" · "+fmt(time);
+  timeline.appendChild(el);
+  positionMarker(el,time);
+  timeline.querySelectorAll(".event-point[data-time]").forEach(m=>positionMarker(m,Number(m.dataset.time)));
+}
+
+function setBeanStage(stage){
+  beanVisual.className="bean-visual";
+  if(stage==="running"){beanVisual.classList.add("running");}
+  if(stage==="yellow"){beanVisual.classList.add("yellow","running");}
+  if(stage==="crack"){beanVisual.classList.add("crack","running");}
+  if(stage==="drop"){beanVisual.classList.add("drop");}
+}
+
+function mark(kind,label,cls,button){
+  if(!running || marks[kind]!==null)return;
+  const t=elapsed();
+  marks[kind]=t;
+  button.disabled=true;
+  addMarker(cls,label,t);
+  logEvent(label,t);
+  if(kind==="yellow"){ crack.disabled=false; setBeanStage("yellow"); }
+  if(kind==="crack"){ drop.disabled=false; setBeanStage("crack"); }
+  if(kind==="drop"){
+    running=false; finished=true; clearInterval(timerId);
+    status.textContent="Roast complete"; status.className="status done";
+    yellow.disabled=true; crack.disabled=true; drop.disabled=true;
+    setBeanStage("drop");
+    moveBean(t);
+  }
+}
+start.addEventListener("click",function(){
+  if(running || finished)return;
+  startTime=performance.now(); running=true;
+  status.textContent="Roasting"; status.className="status live";
+  start.disabled=true; yellow.disabled=false; crack.disabled=true; drop.disabled=true;
+  eventBox.innerHTML="";
+  setBeanStage("running");
+  moveBean(0);
+  logEvent("Start Roast",0);
+  timerId=setInterval(tick,100); tick();
+});
+yellow.addEventListener("click",()=>mark("yellow","🟡 Yellowing","m-yellow",yellow));
+crack.addEventListener("click",()=>mark("crack","🔥 First Crack","m-crack",crack));
+drop.addEventListener("click",()=>mark("drop","⬛ Roast End / Drop","m-drop",drop));
+function updateWeightLoss(){
+  const green=parseFloat($("greenWeight").value);
+  const roasted=parseFloat($("roastedWeight").value);
+  if(green>0 && roasted>0){
+    const loss=((green-roasted)/green)*100;
+    lossValue.textContent=loss.toFixed(1)+"%";
+  }else{
+    lossValue.textContent="—";
+  }
+}
+$("greenWeight").addEventListener("input",updateWeightLoss);
+$("roastedWeight").addEventListener("input",updateWeightLoss);
+updateWeightLoss();
+
+$("save").addEventListener("click",function(){
+  if(!finished){ $("saved").textContent="Finish the roast with Roast End / Drop before saving the log."; return; }
+  let roasted=$("roastedWeight").value;
+  let green=parseFloat($("greenWeight").value)||0;
+  let loss=roasted&&green ? ((green-parseFloat(roasted))/green*100).toFixed(1) : "";
+  const entry={
+    date:new Date().toLocaleString(),
+    bean:$("bean").value, process:$("process").value, profile:$("profile").value,
+    greenWeight:$("greenWeight").value, roastedWeight:roasted, loss,
+    variety:$("variety").value, elevation:$("elevation").value,
+    yellow:marks.yellow!==null?fmt(marks.yellow):"", crack:marks.crack!==null?fmt(marks.crack):"",
+    drop:marks.drop!==null?fmt(marks.drop):"", brew:$("brew").value,
+    score:$("score").value, notes:$("notes").value
+  };
+  const history=JSON.parse(localStorage.getItem("ailema_roasts")||"[]");
+  history.unshift(entry); localStorage.setItem("ailema_roasts",JSON.stringify(history));
+  $("saved").textContent=`Roast saved locally on this device · ${loss}% weight loss.`;
+  renderHistory();
+});
+function renderHistory(){
+  const h=JSON.parse(localStorage.getItem("ailema_roasts")||"[]");
+  const box=$("history");
+  if(!h.length){box.className="history-empty";box.textContent="No saved roasts yet. Saved entries will appear here.";return;}
+  box.className="history";
+  box.innerHTML=h.slice(0,10).map(x=>`
+    <div class="history-row">
+      <div><strong>${x.bean}</strong><div>${x.profile} · ${x.greenWeight} g · ${x.date}</div></div>
+      <div style="text-align:right">🟡 ${x.yellow||"—"} · 🔥 ${x.crack||"—"} · ⬛ ${x.drop||"—"}${x.loss?`<br>${x.loss}% weight loss`:""}</div>
+    </div>`).join("");
+}
+$("reset").addEventListener("click",function(){
+  clearInterval(timerId); startTime=0; running=false; finished=false;
+  marks.yellow=marks.crack=marks.drop=null;
+  timer.textContent="00:00"; timelineMaxMs=15*60*1000; renderRuler(); status.textContent="Ready"; status.className="status";
+  start.disabled=false; yellow.disabled=true; crack.disabled=true; drop.disabled=true;
+  timeline.querySelectorAll(".event-point").forEach(x=>x.remove());
+  moveBean(0);
+  eventBox.innerHTML='<div class="event waiting"><b>Waiting to start</b><span>—</span></div>';
+  setBeanStage("ready");
+  $("roastedWeight").value=""; $("score").value=""; $("notes").value=""; $("saved").textContent=""; updateWeightLoss();
+});
+renderRuler(); renderHistory(); setupSummary(); updateWeightLoss(); setBeanStage("ready"); moveBean(0);
+})();
+</script>
+</body>
+</html>
